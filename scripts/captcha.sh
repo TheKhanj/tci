@@ -1,6 +1,7 @@
 #!/bin/bash
 
-dir="captchas"
+captchasDir="captchas"
+labelsDir="labels"
 
 fetch_captcha() {
 	curl --fail --silent --show-error \
@@ -31,11 +32,11 @@ EOF
 		return 0
 	fi
 
-	mkdir -p "$dir"
+	mkdir -p "$captchasDir" 2>/dev/null
 
 	for ((i = 0; i < count; i++)); do
-		id=$(printf "%04d" "$(($(find "$dir" -name '*.png' | wc -l) + 1))")
-		local file="$dir/$id.png"
+		id=$(printf "%04d" "$(($(find "$captchasDir" -name '*.png' | wc -l) + 1))")
+		local file="$captchasDir/$id.png"
 
 		[ -f "$file" ] && continue
 
@@ -67,18 +68,19 @@ EOF
 		return 0
 	fi
 
-	mkdir -p "$dir"
+	mkdir -p "$captchasDir"
 
-	for file in "$dir"/*.png; do
-		[ -f "$file" ] || continue
+	for captcha in "$captchasDir"/*.png; do
+		[ -f "$captcha" ] || continue
 
-		local vfile="${file%.png}"
-		[ -f "$vfile" ] && continue
+		local label="${captcha%.png}"
+		label="${label/captchas/labels}"
+		[ -f "$label" ] && continue
 
 		local win
 		win=$(xdotool getwindowfocus)
 
-		feh "$file" &
+		feh "$captcha" &
 		local pid=$!
 
 		xdotool windowfocus --sync "$win"
@@ -87,7 +89,7 @@ EOF
 		kill "$pid" 2>/dev/null
 		wait "$pid" 2>/dev/null
 
-		[ -n "$value" ] && printf '%s\n' "$value" >"$vfile"
+		[ -n "$value" ] && printf '%s\n' "$value" >"$label"
 	done
 }
 
@@ -120,27 +122,29 @@ EOF
 		return 0
 	fi
 
-	for file in "$dir"/*.png; do
-		[ -f "$file" ] || continue
+	mkdir -p "$labelsDir" 2>/dev/null
 
-		local id="${file##*/}"
+	for captcha in "$captchasDir"/*.png; do
+		[ -f "$captcha" ] || continue
+
+		local id="${captcha##*/}"
 		id="${id%.png}"
 
 		((10#$id < 10#$start)) && continue
 
-		local vfile="$dir/$id"
-		[ -f "$vfile" ] || continue
+		local label="$labelsDir/$id"
+		[ -f "$label" ] || continue
 
 		local win
 		win=$(xdotool getwindowfocus)
 
-		feh "$file" &
+		feh "$captcha" &
 		local pid=$!
 
 		xdotool windowfocus --sync "$win"
 
 		local value answer
-		value=$(cat "$vfile")
+		value=$(cat "$label")
 		read -r -p "$id: $value [Y/n/q] " answer
 
 		kill "$pid" 2>/dev/null
@@ -148,7 +152,7 @@ EOF
 
 		case "$answer" in
 		n | N)
-			rm -f "$vfile"
+			rm -f "$label"
 			echo "Removed label: $id"
 			;;
 		q | Q)
