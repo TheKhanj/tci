@@ -3,24 +3,9 @@ package main
 import (
 	"net/http"
 	"net/http/cookiejar"
-	"net/url"
 )
 
-const defaultBaseURL = "https://internet.tci.ir"
-
 type ClientOption func(*Client) error
-
-func ClientWithBaseURL(baseURL string) ClientOption {
-	return func(c *Client) error {
-		baseURL, err := url.Parse(baseURL)
-		if err != nil {
-			return err
-		}
-
-		c.baseURL = baseURL
-		return nil
-	}
-}
 
 func ClientWithHTTPClient(client *http.Client) ClientOption {
 	return func(c *Client) error {
@@ -30,7 +15,6 @@ func ClientWithHTTPClient(client *http.Client) ClientOption {
 }
 
 type Client struct {
-	baseURL    *url.URL
 	httpClient *http.Client
 }
 
@@ -39,12 +23,6 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 
 	for _, opt := range opts {
 		if err := opt(&client); err != nil {
-			return nil, err
-		}
-	}
-
-	if client.baseURL == nil {
-		if err := ClientWithBaseURL(defaultBaseURL)(&client); err != nil {
 			return nil, err
 		}
 	}
