@@ -8,18 +8,28 @@ fetch_captcha() {
 }
 
 fetch() {
-	local count=100 help=0
+	local count=100 help=0 opt
 
-	while getopts "c:h:" opt; do
+	while getopts "c:h" opt; do
 		case "$opt" in
 		c) count="$OPTARG" ;;
 		h) help=1 ;;
-		*) exit 1 ;;
+		*) return 1 ;;
 		esac
 	done
 
-	# show help
-	if [ "$help" ] ...
+	if ((help)); then
+		cat <<EOF
+Usage: captcha.sh fetch [-c COUNT] [-h]
+
+Fetch new CAPTCHA images.
+
+Options:
+  -c COUNT    Number of images to fetch (default: 100)
+  -h          Show this help message
+EOF
+		return 0
+	fi
 
 	mkdir -p "$dir"
 
@@ -40,6 +50,23 @@ fetch() {
 }
 
 label() {
+	if [[ "$1" == "-h" ]]; then
+		cat <<EOF
+Usage: captcha.sh label [-h]
+
+Interactively label unlabelled CAPTCHA images.
+
+Controls:
+  Enter       Save the entered CAPTCHA value
+  Empty       Skip the image
+  Ctrl+C      Exit
+
+Options:
+  -h          Show this help message
+EOF
+		return 0
+	fi
+
 	mkdir -p "$dir"
 
 	for file in "$dir"/*.png; do
@@ -48,7 +75,8 @@ label() {
 		local vfile="${file%.png}"
 		[ -f "$vfile" ] && continue
 
-		local win=$(xdotool getwindowfocus)
+		local win
+		win=$(xdotool getwindowfocus)
 
 		feh "$file" &
 		local pid=$!
@@ -64,36 +92,54 @@ label() {
 }
 
 check() {
-	start=1
+	local start=1 help=0 opt
 
-	while getopts "s:h:" opt; do
+	while getopts "s:h" opt; do
 		case "$opt" in
-		s) start=$OPTARG ;;
-		*) exit 1 ;;
+		s) start="$OPTARG" ;;
+		h) help=1 ;;
+		*) return 1 ;;
 		esac
 	done
 
-	# show help
-	if [ "$help" ] ...
+	if ((help)); then
+		cat <<EOF
+Usage: captcha.sh check [-s ID] [-h]
+
+Interactively verify existing CAPTCHA labels.
+
+Options:
+  -s ID       Start checking from this image ID (default: 0001)
+  -h          Show this help message
+
+Controls:
+  Enter / y   Label is correct
+  n           Delete the label
+  q           Quit
+EOF
+		return 0
+	fi
 
 	for file in "$dir"/*.png; do
 		[ -f "$file" ] || continue
 
-		id="${file##*/}"
+		local id="${file##*/}"
 		id="${id%.png}"
 
 		((10#$id < 10#$start)) && continue
 
-		vfile="$dir/$id"
+		local vfile="$dir/$id"
 		[ -f "$vfile" ] || continue
 
+		local win
 		win=$(xdotool getwindowfocus)
 
 		feh "$file" &
-		pid=$!
+		local pid=$!
 
 		xdotool windowfocus --sync "$win"
 
+		local value answer
 		value=$(cat "$vfile")
 		read -r -p "$id: $value [Y/n/q] " answer
 
@@ -118,14 +164,27 @@ fetch)
 	fetch "$@"
 	;;
 label)
-	label
+	shift
+	label "$@"
 	;;
 check)
 	shift
 	check "$@"
 	;;
+-h)
+	cat <<EOF
+Usage: captcha.sh <command> [options]
+
+Commands:
+  fetch       Fetch CAPTCHA images
+  label       Label unlabelled images
+  check       Verify existing labels
+
+Run 'captcha.sh <command> -h' for command-specific help.
+EOF
+	;;
 *)
-	echo "Usage: captcha.sh {fetch|label|check}"
+	echo "Usage: captcha.sh <fetch|label|check> [options]" >&2
 	exit 1
 	;;
 esac
