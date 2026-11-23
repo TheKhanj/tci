@@ -91,13 +91,85 @@ extract_phone_bill() {
     }'
 }
 
+extract_account() {
+	local online ip started download upload
+	local phone name country province city exchange registration subscription
+	local credit mobile username platform
+
+	online=$(extract '.uk-card-header .uk-card-badge')
+	ip=$(extract '.uk-card-header .uk-card-badge tr:nth-of-type(1) td:nth-of-type(2)')
+	started=$(extract '.uk-card-header .uk-card-badge tr:nth-of-type(2) td:nth-of-type(2)')
+	download=$(extract '.uk-card-header .uk-card-badge tr:nth-of-type(3) td:nth-of-type(2)')
+	upload=$(extract '.uk-card-header .uk-card-badge tr:nth-of-type(4) td:nth-of-type(2)')
+
+	phone=$(extract '.uk-card-header .uk-text-meta span')
+	name=$(extract '.uk-card-header h4')
+
+	country=$(extract '.tm-card-body li:nth-of-type(1) b')
+	province=$(extract '.tm-card-body li:nth-of-type(2) b')
+	city=$(extract '.tm-card-body li:nth-of-type(3) b')
+	exchange=$(extract '.tm-card-body li:nth-of-type(4) b')
+	registration=$(extract '.tm-card-body li:nth-of-type(5) b')
+	subscription=$(extract '.tm-card-body li:nth-of-type(6) b')
+	credit=$(extract '.tm-card-body li:nth-of-type(7) b')
+	mobile=$(extract '.tm-card-body li:nth-of-type(8) b')
+	username=$(extract '.tm-card-body li:nth-of-type(9) b')
+	platform=$(extract '.tm-card-body li:nth-of-type(10) b')
+
+	jq -n \
+		--arg online "$online" \
+		--arg ip "$ip" \
+		--arg started "$started" \
+		--arg download "$download" \
+		--arg upload "$upload" \
+		--arg phone "$phone" \
+		--arg name "$name" \
+		--arg country "$country" \
+		--arg province "$province" \
+		--arg city "$city" \
+		--arg exchange "$exchange" \
+		--arg registration "$registration" \
+		--arg subscription "$subscription" \
+		--arg credit "$credit" \
+		--arg mobile "$mobile" \
+		--arg username "$username" \
+		--arg platform "$platform" \
+		'{
+			account: {
+				online: ($online | contains("آنلاین")),
+				phone: $phone,
+				name: $name,
+				location: {
+					country: $country,
+					province: $province,
+					city: $city,
+					exchange: $exchange
+				},
+				registration: $registration,
+				subscription: $subscription,
+				credit: $credit,
+				mobile: $mobile,
+				username: $username,
+				platform: $platform,
+				connection: {
+					ip: $ip,
+					started: $started,
+					download: $download,
+					upload: $upload
+				}
+			}
+		}'
+}
+
 main() {
 	jq -n \
 		--argjson phone_bill "$(extract_phone_bill)" \
 		--argjson internet "$(extract_internet)" \
+		--argjson account "$(extract_account)" \
 		'{
 			phone_bill: $phone_bill,
 			internet: $internet,
+			account: $account,
 		}'
 }
 
