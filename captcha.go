@@ -30,7 +30,9 @@ func YADCaptchaProvider(captcha []byte) (string, error) {
 
 	floating, err := watchI3Window(title)
 	if err != nil {
-		return "", err
+		c := make(chan error, 0)
+		floating = c
+		close(c)
 	}
 
 	cmd := exec.Command(
