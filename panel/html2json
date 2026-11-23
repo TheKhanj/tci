@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+html=$(cat "${1:-/dev/stdin}")
+
+extract() {
+	local q="$1"
+	shift
+	htmlq -t "$q" "$@" <<<"$html" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+}
+
+normalize() {
+	local value=$1
+
+	printf '%s' "$value" |
+		sed \
+			-e 'y/۰۱۲۳۴۵۶۷۸۹/0123456789/' \
+			-e 's/٫/./g'
+}
+
+extract_internet() {
+	local service
+	service=$(extract '.tm-card-body h5' | head -n 1)
+
+	local reserved
+	reserved=$(extract '.tm-card-body h5:nth-of-type(2)' |
+		grep -oE -- '-?[۰۱۲۳۴۵۶۷۸۹0-9]+([٫.][۰۱۲۳۴۵۶۷۸۹0-9]+)?' | head -n 1)
+
+	local bundled
+	bundled=$(extract '.tm-card-body h5:nth-of-type(3)' |
+		grep -oE -- '-?[۰۱۲۳۴۵۶۷۸۹0-9]+([٫.][۰۱۲۳۴۵۶۷۸۹0-9]+)?' | head -n 1)
+
+	# Extract remaining days.
+	local days
+	days=$(extract '.chart[title] .percent span' |
+		grep -o '[۰۱۲۳۴۵۶۷۸۹]\+' | head -n 1)
+	local total_days
+	total_days=$(extract '.chart[title] .percent span' |
+		grep -o '[۰۱۲۳۴۵۶۷۸۹]\+' | tail -n 1)
+
+	# Extract expiration date.
+	local expires
+	expires=$(extract '.chart' --attribute title)
+
+	# Extract remaining traffic.
+	local traffic
+	traffic=$(extract '.chart:not([title]) .percent span[dir="ltr"]' |
+		head -n 1)
+
+	local total_traffic
+	total_traffic=$(extract '.chart:not([title]) .percent span[dir="ltr"]' |
+		tail -n 1)
+
+	jq -n \
+		--arg service "$service" \
+		--arg reserved "$(normalize "$reserved")" \
+		--arg bundled "$(normalize "$bundled")" \
+		--arg days "$(normalize "$days")" \
+		--arg total_days "$(normalize "$total_days")" \
+		--arg expires "${expires#پایان: }" \
+		--arg traffic "$(normalize "${traffic%GB}")" \
+		--arg total_traffic "$(normalize "${total_traffic%GB}")" \
+		'{
+				service: $service,
+				reserved_traffic: ($reserved | tonumber),
+				bundled_traffic: ($bundled | tonumber),
+				days_remaining: ($days | tonumber),
+				days_total: ($total_days | tonumber),
+				expires_at: $expires,
+				traffic_remaining: ($traffic | tonumber),
+				traffic_total: ($total_traffic | tonumber)
+    }'
+}
+
+extract_phone_bill() {
+	local bill
+	bill=$(extract '.uk-alert-danger p' |
+		grep -oE '[۰۱۲۳۴۵۶۷۸۹0-9]+' |
+		head -n 1)
+
+	local payment_url
+	payment_url=$(htmlq -a href '.uk-alert-danger a' <<<"$html")
+
+	jq -n \
+		--arg amount "$(normalize "$bill")" \
+		--arg payment_url "$payment_url" \
+		'{
+				amount: ($amount | tonumber),
+				payment_url: $payment_url
+    }'
+}
+
+main() {
+	jq -n \
+		--argjson phone_bill "$(extract_phone_bill)" \
+		--argjson internet "$(extract_internet)" \
+		'{
+			phone_bill: $phone_bill,
+			internet: $internet,
+		}'
+}
+
+main
