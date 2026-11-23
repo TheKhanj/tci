@@ -2,30 +2,34 @@
 
 dir="captchas"
 
-get_captcha() {
+fetch_captcha() {
 	curl --fail --silent --show-error \
 		--url 'https://internet.tci.ir/panel/captcha/'
 }
 
 fetch() {
-	count=100
+	local count=100 help=0
 
-	while getopts "c:" opt; do
+	while getopts "c:h:" opt; do
 		case "$opt" in
 		c) count="$OPTARG" ;;
+		h) help=1 ;;
 		*) exit 1 ;;
 		esac
 	done
+
+	# show help
+	if [ "$help" ] ...
 
 	mkdir -p "$dir"
 
 	for ((i = 0; i < count; i++)); do
 		id=$(printf "%04d" "$(($(find "$dir" -name '*.png' | wc -l) + 1))")
-		file="$dir/$id.png"
+		local file="$dir/$id.png"
 
 		[ -f "$file" ] && continue
 
-		get_captcha >"$file" || {
+		fetch_captcha >"$file" || {
 			rm -f "$file"
 			echo "Failed to fetch $id" >&2
 			return 1
@@ -41,16 +45,16 @@ label() {
 	for file in "$dir"/*.png; do
 		[ -f "$file" ] || continue
 
-		vfile="${file%.png}"
+		local vfile="${file%.png}"
 		[ -f "$vfile" ] && continue
 
-		win=$(xdotool getwindowfocus)
+		local win=$(xdotool getwindowfocus)
 
 		feh "$file" &
-		pid=$!
+		local pid=$!
 
 		xdotool windowfocus --sync "$win"
-		read -r -p "Enter the number: " value
+		read -r -p "Enter the CAPTCHA value: " value
 
 		kill "$pid" 2>/dev/null
 		wait "$pid" 2>/dev/null
@@ -62,12 +66,15 @@ label() {
 check() {
 	start=1
 
-	while getopts "s:" opt; do
+	while getopts "s:h:" opt; do
 		case "$opt" in
 		s) start=$OPTARG ;;
 		*) exit 1 ;;
 		esac
 	done
+
+	# show help
+	if [ "$help" ] ...
 
 	for file in "$dir"/*.png; do
 		[ -f "$file" ] || continue
@@ -88,7 +95,7 @@ check() {
 		xdotool windowfocus --sync "$win"
 
 		value=$(cat "$vfile")
-		read -r -p "$id: $value [Y/n/s/q] " answer
+		read -r -p "$id: $value [Y/n/q] " answer
 
 		kill "$pid" 2>/dev/null
 		wait "$pid" 2>/dev/null
@@ -97,9 +104,6 @@ check() {
 		n | N)
 			rm -f "$vfile"
 			echo "Removed label: $id"
-			;;
-		s | S)
-			continue
 			;;
 		q | Q)
 			break
