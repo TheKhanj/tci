@@ -2,6 +2,7 @@
 
 captchasDir="captchas"
 labelsDir="labels"
+checksDir="checks"
 
 fetch_captcha() {
 	curl --fail --silent --show-error \
@@ -142,23 +143,26 @@ EOF
 		local pid=$!
 
 		xdotool windowfocus --sync "$win"
+		local check checkFile="$checksDir/$id"
+		check="$(cat "$checkFile" || echo 0)"
 
 		local value answer
 		value=$(cat "$label")
-		read -r -p "$id: $value [Y/n/q] " answer
+		read -r -p "$id: $value (checked $check times) [Y/n/q] " answer
 
 		kill "$pid" 2>/dev/null
 		wait "$pid" 2>/dev/null
 
 		case "$answer" in
 		n | N)
-			rm -f "$label"
+			rm -f "$label" "$checkFile"
 			echo "Removed label: $id"
 			;;
 		q | Q)
 			break
 			;;
 		esac
+		echo "$((check + 1))" >"$checkFile"
 	done
 }
 
