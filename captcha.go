@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -9,9 +10,9 @@ import (
 	"strings"
 )
 
-type CaptchaProvider func(captcha []byte) (string, error)
+type CaptchaProvider func(ctx context.Context, captcha []byte) (string, error)
 
-func YADCaptchaProvider(captcha []byte) (string, error) {
+func YADCaptchaProvider(ctx context.Context, captcha []byte) (string, error) {
 	f, err := os.CreateTemp("", "captcha-*.png")
 	if err != nil {
 		return "", err
@@ -30,12 +31,13 @@ func YADCaptchaProvider(captcha []byte) (string, error) {
 
 	floating, err := watchI3Window(title)
 	if err != nil {
-		c := make(chan error, 0)
+		c := make(chan error)
 		floating = c
 		close(c)
 	}
 
-	cmd := exec.Command(
+	cmd := exec.CommandContext(
+		ctx,
 		"yad",
 		"--title="+title,
 		"--image="+f.Name(),
@@ -57,8 +59,13 @@ func YADCaptchaProvider(captcha []byte) (string, error) {
 
 	defer cmd.Process.Kill()
 
-	if err := <-floating; err != nil {
-		return "", err
+	select {
+	case err := <-floating:
+		if err != nil {
+			return "", err
+		}
+	case <-ctx.Done():
+		return "", ctx.Err()
 	}
 
 	data, err := io.ReadAll(out)
@@ -67,6 +74,9 @@ func YADCaptchaProvider(captcha []byte) (string, error) {
 	}
 
 	if err := cmd.Wait(); err != nil {
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
 		return "", err
 	}
 

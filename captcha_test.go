@@ -21,7 +21,7 @@ func TestYADCaptchaProvider(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := YADCaptchaProvider(image)
+	got, err := YADCaptchaProvider(t.Context(), image)
 	if err != nil {
 		t.Fatalf("YADCaptchaProvider() error: %v", err)
 	}
