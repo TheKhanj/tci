@@ -53,12 +53,12 @@ extract_internet() {
 		tail -n 1)
 
 	jq -n \
-		--arg service "$service" \
+		--arg service "$(normalize "$service")" \
 		--arg reserved "$(normalize "$reserved")" \
 		--arg bundled "$(normalize "$bundled")" \
 		--arg days "$(normalize "$days")" \
 		--arg total_days "$(normalize "$total_days")" \
-		--arg expires "${expires#پایان: }" \
+		--arg expires "$(normalize "${expires#پایان: }")" \
 		--arg traffic "$(normalize "${traffic%GB}")" \
 		--arg total_traffic "$(normalize "${total_traffic%GB}")" \
 		'{
@@ -122,16 +122,16 @@ extract_account() {
 		--arg started "$started" \
 		--arg download "$download" \
 		--arg upload "$upload" \
-		--arg phone "$phone" \
+		--arg phone "$(normalize "$phone")" \
 		--arg name "$name" \
 		--arg country "$country" \
 		--arg province "$province" \
 		--arg city "$city" \
 		--arg exchange "$exchange" \
-		--arg registration "$registration" \
+		--arg registration "$(normalize "$registration")" \
 		--arg subscription "$subscription" \
-		--arg credit "$credit" \
-		--arg mobile "$mobile" \
+		--arg credit "$(normalize "$credit" | grep -o '[0-9]\+')" \
+		--arg mobile "$(normalize "$mobile")" \
 		--arg username "$username" \
 		--arg platform "$platform" \
 		'{
