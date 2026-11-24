@@ -1,12 +1,12 @@
 package panel
 
 type Panel struct {
-	PhoneBill PhoneBill `json:"phone_bill"`
-	Internet  Internet  `json:"internet"`
-	Account   Account   `json:"account"`
+	Phone    Phone    `json:"phone"`
+	Internet Internet `json:"internet"`
+	Account  Account  `json:"account"`
 }
 
-type PhoneBill struct {
+type Phone struct {
 	Amount     int64  `json:"amount"`
 	PaymentURL string `json:"payment_url"`
 }
@@ -23,10 +23,6 @@ type Internet struct {
 }
 
 type Account struct {
-	Account AccountInfo `json:"account"`
-}
-
-type AccountInfo struct {
 	Online       bool       `json:"online"`
 	Phone        string     `json:"phone"`
 	Name         string     `json:"name"`
