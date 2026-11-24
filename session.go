@@ -1,4 +1,4 @@
-package main
+package tci
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const defaultBaseURL = "https://internet.tci.ir"
+const DefaultBaseURL = "https://internet.tci.ir"
 
 var defaultCaptchaProvider = YADCaptchaProvider
 
@@ -48,7 +48,7 @@ func NewSession(client *Client, opts ...SessionOption) (*Session, error) {
 	}
 
 	if session.baseURL == nil {
-		if err := SessionWithBaseURL(defaultBaseURL)(&session); err != nil {
+		if err := SessionWithBaseURL(DefaultBaseURL)(&session); err != nil {
 			return nil, err
 		}
 	}
@@ -94,7 +94,7 @@ func (s *Session) Login(
 		"LoginFromWeb": {""},
 	}
 
-	target := fmt.Sprintf("%s/panel/login/%d", defaultBaseURL, timestamp)
+	target := fmt.Sprintf("%s/panel/login/%d", DefaultBaseURL, timestamp)
 
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -107,8 +107,8 @@ func (s *Session) Login(
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Origin", defaultBaseURL)
-	req.Header.Set("Referer", defaultBaseURL+"/panel/")
+	req.Header.Set("Origin", DefaultBaseURL)
+	req.Header.Set("Referer", DefaultBaseURL+"/panel/")
 
 	resp, err := s.Do(req)
 	if err != nil {
@@ -175,7 +175,7 @@ func (s *Session) fetchCaptcha(
 	ctx context.Context,
 	timestamp int64,
 ) ([]byte, error) {
-	target := defaultBaseURL + "/panel/captcha/?r=" + fmt.Sprintf(
+	target := DefaultBaseURL + "/panel/captcha/?r=" + fmt.Sprintf(
 		"%d", timestamp,
 	)
 
@@ -189,7 +189,7 @@ func (s *Session) fetchCaptcha(
 		return nil, err
 	}
 
-	req.Header.Set("Referer", defaultBaseURL+"/panel/")
+	req.Header.Set("Referer", DefaultBaseURL+"/panel/")
 
 	resp, err := s.Do(req)
 	if err != nil {
