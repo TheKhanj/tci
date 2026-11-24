@@ -1,9 +1,88 @@
 package panel
 
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/thekhanj/tci"
+)
+
 type Panel struct {
 	Phone    Phone    `json:"phone"`
 	Internet Internet `json:"internet"`
 	Account  Account  `json:"account"`
+}
+
+var _ tci.Outputter = (*Panel)(nil)
+
+func (Panel) OutputHeader(format tci.OutputFormat) []string {
+	header := []string{
+		"number",
+		"status",
+		"days",
+		"traffic",
+		"phone_bill",
+	}
+
+	if format == tci.OutputWide {
+		header = []string{
+			"number",
+			"status",
+			"ip",
+			"days",
+			"traffic",
+			"expires",
+			"phone_bill",
+			"phone_bill_url",
+			"subscription",
+		}
+	}
+
+	return header
+}
+
+func (p Panel) OutputRow(format tci.OutputFormat) []string {
+	usedDays := p.Internet.DaysTotal - p.Internet.DaysRemaining
+
+	daysPercent := 0
+	if p.Internet.DaysTotal > 0 {
+		daysPercent = usedDays * 100 / p.Internet.DaysTotal
+	}
+
+	days := fmt.Sprintf("%d(used)/%d (%d%%)",
+		usedDays, p.Internet.DaysTotal, daysPercent)
+
+	traffic := fmt.Sprintf("%g/%g",
+		p.Internet.TrafficRemaining, p.Internet.TrafficTotal)
+
+	status := "offline"
+	if p.Account.Online {
+		status = "online"
+	}
+
+	fields := []string{
+		p.Account.Username,
+		status,
+		days,
+		traffic,
+		strconv.FormatInt(p.Phone.Amount, 10),
+	}
+
+	if format == tci.OutputWide {
+		fields = []string{
+			p.Account.Username,
+			status,
+			p.Account.Connection.IP,
+			days,
+			traffic,
+			p.Internet.ExpiresAt,
+			strconv.FormatInt(p.Phone.Amount, 10),
+			p.Phone.PaymentURL,
+			p.Account.Subscription,
+		}
+	}
+
+	return fields
 }
 
 type Phone struct {
