@@ -2,31 +2,35 @@ package tci
 
 import "os"
 
-func Executable(blob []byte) (path string, cleanup func(), err error) {
-	path = ""
-	cleanup = func() {}
-	err = nil
-
+func TempExecutable(blob []byte) (string, func() error, error) {
 	file, err := os.CreateTemp("", "tci-tmp-bin-*")
 	if err != nil {
-		return path, cleanup, err
+		return "", nil, err
 	}
 
-	_, err = file.Write(blob)
-	if err != nil {
-		file.Close()
-		os.Remove(file.Name())
-		return path, cleanup, err
+	path := file.Name()
+	remove := func() error {
+		return os.Remove(path)
 	}
 
-	err = file.Chmod(0o755)
-	file.Close()
-	if err != nil {
-		os.Remove(file.Name())
-		return path, cleanup, err
+	defer func() {
+		if err != nil {
+			file.Close()
+			remove()
+		}
+	}()
+
+	if _, err = file.Write(blob); err != nil {
+		return "", nil, err
 	}
 
-	return file.Name(), func() {
-		os.Remove(file.Name())
-	}, nil
+	if err = file.Chmod(0o755); err != nil {
+		return "", nil, err
+	}
+
+	if err = file.Close(); err != nil {
+		return "", nil, err
+	}
+
+	return path, remove, nil
 }
