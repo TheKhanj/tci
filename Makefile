@@ -7,8 +7,12 @@ endif
 all: tci
 
 .PHONY: tci
-tci:
-	go build \
-		-ldflags "$(LD_FLAGS)" \
-		-o $@ \
-		./cmd
+tci: config
+	go generate && \
+		go build \
+			-ldflags "$(LD_FLAGS)" \
+			-o $@ \
+			./cmd
+
+config: schema.json
+	cat $< > $@
