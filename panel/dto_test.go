@@ -57,19 +57,19 @@ func TestPanelOutput(t *testing.T) {
 	}
 
 	t.Run("default", func(t *testing.T) {
-		if err := tci.Output(os.Stdout, tci.OutputDefault, []Panel{p}); err != nil {
+		if err := tci.TableOutput(os.Stdout, tci.OutputDefault, []Panel{p}); err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("wide", func(t *testing.T) {
-		if err := tci.Output(os.Stdout, tci.OutputWide, []Panel{p}); err != nil {
+		if err := tci.TableOutput(os.Stdout, tci.OutputWide, []Panel{p}); err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("json", func(t *testing.T) {
-		if err := tci.Output(os.Stdout, tci.OutputJson, []Panel{p}); err != nil {
+		if err := tci.TableOutput(os.Stdout, tci.OutputJson, []Panel{p}); err != nil {
 			t.Fatal(err)
 		}
 	})

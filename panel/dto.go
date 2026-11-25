@@ -13,9 +13,9 @@ type Panel struct {
 	Account  Account  `json:"account"`
 }
 
-var _ tci.Outputter = (*Panel)(nil)
+var _ tci.Table = (*Panel)(nil)
 
-func (Panel) OutputHeader(format tci.OutputFormat) []string {
+func (Panel) Headers(format tci.OutputFormat) []string {
 	header := []string{
 		"number",
 		"status",
@@ -41,7 +41,7 @@ func (Panel) OutputHeader(format tci.OutputFormat) []string {
 	return header
 }
 
-func (p Panel) OutputRow(format tci.OutputFormat) []string {
+func (p Panel) Values(fields []string) []string {
 	usedDays := p.Internet.DaysTotal - p.Internet.DaysRemaining
 
 	daysPercent := 0
@@ -60,29 +60,19 @@ func (p Panel) OutputRow(format tci.OutputFormat) []string {
 		status = "online"
 	}
 
-	fields := []string{
-		p.Account.Username,
-		status,
-		days,
-		traffic,
-		strconv.FormatInt(p.Phone.Amount, 10),
+	values := map[string]tci.FieldValue{
+		"number":         tci.NewFieldValue(p.Account.Username),
+		"status":         tci.NewFieldValue(status),
+		"ip":             tci.NewFieldValue(p.Account.Connection.IP),
+		"days":           tci.NewFieldValue(days),
+		"traffic":        tci.NewFieldValue(traffic),
+		"expires":        tci.NewFieldValue(p.Internet.ExpiresAt),
+		"phone_bill":     tci.NewFieldValue(strconv.FormatInt(p.Phone.Amount, 10)),
+		"phone_bill_url": tci.NewFieldValue(p.Phone.PaymentURL),
+		"subscription":   tci.NewFieldValue(p.Account.Subscription),
 	}
 
-	if format == tci.OutputWide {
-		fields = []string{
-			p.Account.Username,
-			status,
-			p.Account.Connection.IP,
-			days,
-			traffic,
-			p.Internet.ExpiresAt,
-			strconv.FormatInt(p.Phone.Amount, 10),
-			p.Phone.PaymentURL,
-			p.Account.Subscription,
-		}
-	}
-
-	return fields
+	return tci.SelectFields(fields, values)
 }
 
 type Phone struct {
