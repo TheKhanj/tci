@@ -8,12 +8,33 @@ import (
 	"text/tabwriter"
 )
 
-type ColumnSet string
+type ColumnSet int
 
 const (
-	ColumnsDefault ColumnSet = "default"
-	ColumnsWide              = "wide"
+	ColumnsDefault ColumnSet = iota
+	ColumnsWide
 )
+
+type Column struct {
+	Header string
+	Set    ColumnSet
+}
+
+type Columns []Column
+
+func (cs Columns) Headers(set ColumnSet) []string {
+	ret := make([]string, 0)
+	for _, c := range cs {
+		if c.Set <= set {
+			ret = append(ret, c.Header)
+		}
+	}
+	return ret
+}
+
+func NewColumn(name string, set ColumnSet) Column {
+	return Column{name, set}
+}
 
 type OutputFormat string
 
@@ -23,8 +44,8 @@ const (
 )
 
 type Tabular interface {
-	Columns(columns ColumnSet) []string
-	Values(columns []string) []string
+	Columns() Columns
+	Values(names []string) []string
 }
 
 func TableWriteJson[T Tabular](
@@ -34,7 +55,7 @@ func TableWriteJson[T Tabular](
 }
 
 func TableWriteTsv[T Tabular](
-	w io.Writer, columns []string, arr []T,
+	w io.Writer, names []string, arr []T,
 ) error {
 	if len(arr) == 0 {
 		return nil
@@ -42,35 +63,35 @@ func TableWriteTsv[T Tabular](
 
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
-	fmt.Fprintln(tw, strings.Join(columns, "\t"))
+	fmt.Fprintln(tw, strings.Join(names, "\t"))
 	for _, item := range arr {
-		fmt.Fprintln(tw, strings.Join(item.Values(columns), "\t"))
+		fmt.Fprintln(tw, strings.Join(item.Values(names), "\t"))
 	}
 
 	return tw.Flush()
 }
 
-type FieldValue struct {
+type Cell struct {
 	Value string
 	Lazy  func() string
 }
 
-func (v FieldValue) String() string {
+func (v Cell) String() string {
 	if v.Lazy != nil {
 		return v.Lazy()
 	}
 	return v.Value
 }
 
-func NewFieldValue(value string) FieldValue {
-	return FieldValue{Value: value}
+func NewCell(value string) Cell {
+	return Cell{Value: value}
 }
 
-func NewLazyFieldValue(fn func() string) FieldValue {
-	return FieldValue{Lazy: fn}
+func NewLazyCell(fn func() string) Cell {
+	return Cell{Lazy: fn}
 }
 
-func SelectFields(fields []string, values map[string]FieldValue) []string {
+func SelectCell(fields []string, values map[string]Cell) []string {
 	row := make([]string, 0, len(fields))
 
 	for _, field := range fields {

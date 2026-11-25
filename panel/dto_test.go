@@ -59,7 +59,7 @@ func TestPanelOutput(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		if err := tci.TableWriteTsv(
 			os.Stdout,
-			p.Columns(tci.ColumnsDefault),
+			p.Columns().Headers(tci.ColumnsDefault),
 			[]Panel{p},
 		); err != nil {
 			t.Fatal(err)
@@ -69,7 +69,7 @@ func TestPanelOutput(t *testing.T) {
 	t.Run("wide", func(t *testing.T) {
 		if err := tci.TableWriteTsv(
 			os.Stdout,
-			p.Columns(tci.ColumnsWide),
+			p.Columns().Headers(tci.ColumnsWide),
 			[]Panel{p},
 		); err != nil {
 			t.Fatal(err)

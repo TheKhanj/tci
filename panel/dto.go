@@ -15,30 +15,18 @@ type Panel struct {
 
 var _ tci.Tabular = (*Panel)(nil)
 
-func (Panel) Columns(columns tci.ColumnSet) []string {
-	header := []string{
-		"number",
-		"status",
-		"days",
-		"traffic",
-		"phone_bill",
+func (Panel) Columns() tci.Columns {
+	return []tci.Column{
+		tci.NewColumn("number", tci.ColumnsDefault),
+		tci.NewColumn("status", tci.ColumnsDefault),
+		tci.NewColumn("ip", tci.ColumnsWide),
+		tci.NewColumn("days", tci.ColumnsDefault),
+		tci.NewColumn("traffic", tci.ColumnsDefault),
+		tci.NewColumn("expires", tci.ColumnsWide),
+		tci.NewColumn("phone_bill", tci.ColumnsDefault),
+		tci.NewColumn("phone_bill_url", tci.ColumnsWide),
+		tci.NewColumn("subscription", tci.ColumnsWide),
 	}
-
-	if columns == tci.ColumnsWide {
-		header = []string{
-			"number",
-			"status",
-			"ip",
-			"days",
-			"traffic",
-			"expires",
-			"phone_bill",
-			"phone_bill_url",
-			"subscription",
-		}
-	}
-
-	return header
 }
 
 func (p Panel) Values(fields []string) []string {
@@ -60,19 +48,19 @@ func (p Panel) Values(fields []string) []string {
 		status = "online"
 	}
 
-	values := map[string]tci.FieldValue{
-		"number":         tci.NewFieldValue(p.Account.Username),
-		"status":         tci.NewFieldValue(status),
-		"ip":             tci.NewFieldValue(p.Account.Connection.IP),
-		"days":           tci.NewFieldValue(days),
-		"traffic":        tci.NewFieldValue(traffic),
-		"expires":        tci.NewFieldValue(p.Internet.ExpiresAt),
-		"phone_bill":     tci.NewFieldValue(strconv.FormatInt(p.Phone.Amount, 10)),
-		"phone_bill_url": tci.NewFieldValue(p.Phone.PaymentURL),
-		"subscription":   tci.NewFieldValue(p.Account.Subscription),
+	values := map[string]tci.Cell{
+		"number":         tci.NewCell(p.Account.Username),
+		"status":         tci.NewCell(status),
+		"ip":             tci.NewCell(p.Account.Connection.IP),
+		"days":           tci.NewCell(days),
+		"traffic":        tci.NewCell(traffic),
+		"expires":        tci.NewCell(p.Internet.ExpiresAt),
+		"phone_bill":     tci.NewCell(strconv.FormatInt(p.Phone.Amount, 10)),
+		"phone_bill_url": tci.NewCell(p.Phone.PaymentURL),
+		"subscription":   tci.NewCell(p.Account.Subscription),
 	}
 
-	return tci.SelectFields(fields, values)
+	return tci.SelectCell(fields, values)
 }
 
 type Phone struct {
