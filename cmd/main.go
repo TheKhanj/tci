@@ -10,7 +10,7 @@ import (
 
 type Cli struct{}
 
-const VERSION = "dev"
+var VERSION = "dev"
 
 var VersionCmd *cli.Command = &cli.Command{
 	Name: "version",
