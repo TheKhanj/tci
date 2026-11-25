@@ -8,36 +8,43 @@ import (
 	"text/tabwriter"
 )
 
+type ColumnSet string
+
+const (
+	ColumnsDefault ColumnSet = "default"
+	ColumnsWide              = "wide"
+)
+
 type OutputFormat string
 
 const (
-	OutputDefault OutputFormat = ""
-	OutputWide    OutputFormat = "wide"
-	OutputJson    OutputFormat = "json"
+	OutputTsv  OutputFormat = "tsv"
+	OutputJson              = "json"
 )
 
-type Table interface {
-	Headers(OutputFormat) []string
-	Values(fields []string) []string
+type Tabular interface {
+	Columns(columns ColumnSet) []string
+	Values(columns []string) []string
 }
 
-func TableOutput[T Table](w io.Writer, format OutputFormat, arr []T) error {
-	if format == OutputJson {
-		return json.NewEncoder(w).Encode(arr)
-	}
+func TableWriteJson[T Tabular](
+	w io.Writer, arr []T,
+) error {
+	return json.NewEncoder(w).Encode(arr)
+}
 
+func TableWriteTsv[T Tabular](
+	w io.Writer, columns []string, arr []T,
+) error {
 	if len(arr) == 0 {
 		return nil
 	}
 
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
-	fmt.Fprintln(tw, strings.Join(arr[0].Headers(format), "\t"))
-
-	headers := arr[0].Headers(format)
-	fmt.Fprintln(tw, strings.Join(headers, "\t"))
+	fmt.Fprintln(tw, strings.Join(columns, "\t"))
 	for _, item := range arr {
-		fmt.Fprintln(tw, strings.Join(item.Values(headers), "\t"))
+		fmt.Fprintln(tw, strings.Join(item.Values(columns), "\t"))
 	}
 
 	return tw.Flush()

@@ -13,9 +13,9 @@ type Panel struct {
 	Account  Account  `json:"account"`
 }
 
-var _ tci.Table = (*Panel)(nil)
+var _ tci.Tabular = (*Panel)(nil)
 
-func (Panel) Headers(format tci.OutputFormat) []string {
+func (Panel) Columns(columns tci.ColumnSet) []string {
 	header := []string{
 		"number",
 		"status",
@@ -24,7 +24,7 @@ func (Panel) Headers(format tci.OutputFormat) []string {
 		"phone_bill",
 	}
 
-	if format == tci.OutputWide {
+	if columns == tci.ColumnsWide {
 		header = []string{
 			"number",
 			"status",
