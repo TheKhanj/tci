@@ -1,4 +1,2 @@
 /.env
 /tci
-/config
-/config.go
