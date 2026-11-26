@@ -16,15 +16,9 @@ const (
 type ClientSerializerOption func(*ClientSerializer) error
 
 func ClientSerializerWithBaseURL(baseURL string) ClientSerializerOption {
-	return func(s *ClientSerializer) error {
-		baseURL, err := url.Parse(baseURL)
-		if err != nil {
-			return err
-		}
-
-		s.baseURL = baseURL
-		return nil
-	}
+	return WithBaseURL(baseURL, func(s *ClientSerializer, u *url.URL) {
+		s.baseURL = u
+	})
 }
 
 func NewClientSerializer(
@@ -64,14 +58,9 @@ func (s *ClientSerializer) Marshal(c *Client) ([]byte, error) {
 		return nil, errors.New("client has no cookie jar")
 	}
 
-	u, err := url.Parse(s.baseURL.String())
-	if err != nil {
-		return nil, err
-	}
-
 	var cookies []*http.Cookie
 
-	for _, cookie := range c.httpClient.Jar.Cookies(u) {
+	for _, cookie := range c.httpClient.Jar.Cookies(s.baseURL) {
 		switch cookie.Name {
 		case cookiePHPSESSID, cookieSession1:
 			cookies = append(cookies, cookie)
@@ -105,12 +94,7 @@ func (s *ClientSerializer) Unmarshal(data []byte, c *Client) error {
 		c.httpClient.Jar = jar
 	}
 
-	u, err := url.Parse(s.baseURL.String())
-	if err != nil {
-		return err
-	}
-
-	c.httpClient.Jar.SetCookies(u, state.Cookies)
+	c.httpClient.Jar.SetCookies(s.baseURL, state.Cookies)
 
 	return nil
 }

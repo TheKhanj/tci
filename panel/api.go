@@ -26,15 +26,9 @@ type Api struct {
 type ApiOption func(*Api) error
 
 func ApiWithBaseURL(baseURL string) ApiOption {
-	return func(a *Api) error {
-		u, err := url.Parse(baseURL)
-		if err != nil {
-			return err
-		}
-
+	return tci.WithBaseURL(baseURL, func(a *Api, u *url.URL) {
 		a.baseURL = u
-		return nil
-	}
+	})
 }
 
 func NewApi(opts ...ApiOption) (*Api, error) {

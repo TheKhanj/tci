@@ -24,15 +24,9 @@ func SessionWithCaptchaProvider(provider CaptchaProvider) SessionOption {
 }
 
 func SessionWithBaseURL(baseURL string) SessionOption {
-	return func(s *Session) error {
-		baseURL, err := url.Parse(baseURL)
-		if err != nil {
-			return err
-		}
-
-		s.baseURL = baseURL
-		return nil
-	}
+	return WithBaseURL(baseURL, func(s *Session, u *url.URL) {
+		s.baseURL = u
+	})
 }
 
 func NewSession(client *Client, opts ...SessionOption) (*Session, error) {
