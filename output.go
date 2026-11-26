@@ -22,6 +22,8 @@ type Column struct {
 
 type Columns []Column
 
+type HeadersFn = func(set ColumnSet) []string
+
 func (cs Columns) Headers(set ColumnSet) []string {
 	ret := make([]string, 0)
 	for _, c := range cs {
@@ -40,7 +42,7 @@ type OutputFormat string
 
 const (
 	OutputTsv  OutputFormat = "tsv"
-	OutputJson              = "json"
+	OutputJson OutputFormat = "json"
 )
 
 type Tabular interface {

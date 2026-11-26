@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/thekhanj/tci"
 	"github.com/urfave/cli/v3"

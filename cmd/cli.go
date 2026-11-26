@@ -6,8 +6,6 @@ import (
 	"os"
 
 	tcicli "github.com/thekhanj/tci/internal/cli"
-	"github.com/thekhanj/tci/internal/config"
-	"github.com/thekhanj/tci/panel"
 	"github.com/urfave/cli/v3"
 )
 
