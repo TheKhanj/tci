@@ -1,13 +1,25 @@
 package cli
 
 import (
+	"github.com/thekhanj/tci"
 	"github.com/urfave/cli/v3"
 )
 
 type OutputOptions struct {
-	Wide    bool
-	Columns []string
-	Format  string
+	Wide            bool
+	SelectedColumns []string
+	Format          string
+}
+
+func (o OutputOptions) Headers(headersFn tci.HeadersFn) []string {
+	if len(o.SelectedColumns) != 0 {
+		return o.SelectedColumns
+	}
+	if o.Wide {
+		return headersFn(tci.ColumnsWide)
+	}
+
+	return headersFn(tci.ColumnsDefault)
 }
 
 func OutputFlags(opts *OutputOptions) []cli.Flag {
@@ -20,9 +32,8 @@ func OutputFlags(opts *OutputOptions) []cli.Flag {
 		},
 		&cli.StringSliceFlag{
 			Name:        "columns",
-			Aliases:     []string{"c"},
 			Usage:       "Columns to display",
-			Destination: &opts.Columns,
+			Destination: &opts.SelectedColumns,
 		},
 		&cli.StringFlag{
 			Name:        "output",
