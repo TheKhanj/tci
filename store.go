@@ -37,23 +37,25 @@ func StoreWithFilename[T any](name string) StoreOption[T] {
 }
 
 func GetDataDir() (string, error) {
+	var dir string
+
 	if os.Geteuid() == 0 {
-		return "/var/lib", nil
+		dir = "/var/lib"
+	} else if xdg := os.Getenv("XDG_STATE_HOME"); xdg != "" {
+		dir = xdg
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("get home directory: %w", err)
+		}
+		dir = filepath.Join(home, ".local", "state")
 	}
 
-	if dir := os.Getenv("XDG_STATE_HOME"); dir != "" {
-		return dir, nil
-	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("get home directory: %w", err)
-	}
-
-	return filepath.Join(home, ".local", "state"), nil
+	return filepath.Join(dir, "tci"), nil
 }
 
 func NewStore[T any](
+	filename string,
 	serializer Serializer[T],
 	opts ...StoreOption[T],
 ) (*Store[T], error) {
@@ -67,8 +69,8 @@ func NewStore[T any](
 	}
 
 	s := &Store[T]{
-		dir:        filepath.Join(dir, "tci"),
-		filename:   "data",
+		dir:        dir,
+		filename:   filename,
 		serializer: serializer,
 	}
 
