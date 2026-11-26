@@ -98,3 +98,5 @@ func (s *ClientSerializer) Unmarshal(data []byte, c *Client) error {
 
 	return nil
 }
+
+var _ Serializer[Client] = (*ClientSerializer)(nil)
