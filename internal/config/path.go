@@ -1,25 +1,9 @@
-package main
+package config
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
-
-	"github.com/thekhanj/tci"
-	"github.com/urfave/cli/v3"
 )
-
-func ConfigFlag(path *string) cli.Flag {
-	return &cli.StringFlag{
-		Name:        "config",
-		Aliases:     []string{"c"},
-		Usage:       "Path to configuration file",
-		Value:       DefaultConfigPath(),
-		Destination: path,
-	}
-}
 
 func DefaultConfigPath() string {
 	candidates := []string{}
@@ -51,18 +35,4 @@ func DefaultConfigPath() string {
 	}
 
 	return "tci.json"
-}
-
-func ReadConfig(path string) (tci.Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return tci.Config{}, fmt.Errorf("read config %s: %w", path, err)
-	}
-
-	var config tci.Config
-	if err := json.Unmarshal(data, &config); err != nil {
-		return tci.Config{}, fmt.Errorf("parse config %s: %w", path, err)
-	}
-
-	return config, nil
 }
